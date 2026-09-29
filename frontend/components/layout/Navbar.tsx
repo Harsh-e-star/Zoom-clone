@@ -1,178 +1,300 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import {
-  Video,
   Home,
-  Calendar,
+  MessageSquare,
   Clock,
+  Users,
+  Search,
   Settings,
   X,
   ShieldCheck,
+  CheckCircle2,
+  Copy,
+  PenTool,
+  FileText,
+  ChevronDown,
+  LogOut,
+  ExternalLink,
 } from 'lucide-react';
+import { useToast } from '../ui/Toast';
 
-export function Navbar() {
-  const pathname = usePathname();
-  const [time, setTime] = useState<string>('');
+interface NavbarProps {
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
+}
+
+export function Navbar({ activeTab = 'home', onTabChange }: NavbarProps) {
+  const { showToast } = useToast();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setTime(
-        now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      );
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const navLinks = [
-    { label: 'Home', href: '/', icon: Home },
-    { label: 'Meetings', href: '/#meetings', icon: Video },
-    { label: 'Schedule', href: '/#schedule', icon: Calendar },
+  const navTabs = [
+    { id: 'home', label: 'Home', href: '/', icon: Home },
+    { id: 'chat', label: 'Team Chat', href: '/#chat', icon: MessageSquare },
+    { id: 'meetings', label: 'Meetings', href: '/#meetings', icon: Clock },
+    { id: 'contacts', label: 'Contacts', href: '/#contacts', icon: Users },
+    { id: 'whiteboards', label: 'Whiteboards', href: '/#whiteboards', icon: PenTool },
+    { id: 'notes', label: 'Notes', href: '/#notes', icon: FileText },
   ];
+
+  const handleCopyPMI = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard?.writeText('8473921056');
+    showToast('Personal Meeting ID (847 392 1056) copied!', 'success');
+  };
+
+  const handleCopyInvite = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard?.writeText('http://localhost:3000/meeting/8473921056');
+    showToast('Personal Meeting Link copied!', 'success');
+  };
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-zinc-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Left: Brand Logo */}
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:bg-blue-700 transition">
-                <Video className="w-6 h-6 fill-current" />
+      {/* Zoom Authentic Top Title & Navigation Bar */}
+      <header className="sticky top-0 z-40 w-full bg-[#1b1c20] text-white border-b border-[#2d2e36] select-none h-[52px]">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 h-full flex items-center justify-between">
+          {/* 1. Left: Mac Window Traffic Lights + Zoom Workplace Logo */}
+          <div className="flex items-center gap-4">
+            {/* macOS Window Controls (Traffic Lights) */}
+            <div className="hidden sm:flex items-center gap-2 pr-2">
+              <span className="w-3 h-3 rounded-full bg-[#ff5f57] border border-[#e0443e] inline-block shadow-xs" />
+              <span className="w-3 h-3 rounded-full bg-[#febc2e] border border-[#d89e24] inline-block shadow-xs" />
+              <span className="w-3 h-3 rounded-full bg-[#28c840] border border-[#1aab29] inline-block shadow-xs" />
+            </div>
+
+            {/* Zoom Authentic Logo */}
+            <Link href="/" className="flex items-center gap-1.5 group">
+              <div className="flex items-center text-[#0e71eb] font-extrabold text-2xl tracking-tighter hover:opacity-95 transition">
+                <span>zoom</span>
               </div>
-              <div className="flex flex-col">
-                <span className="text-xl font-bold tracking-tight text-zinc-900 group-hover:text-blue-600 transition flex items-center gap-1.5">
-                  MeetSpace
-                  <span className="text-[10px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60">
-                    Pro
-                  </span>
-                </span>
-                <span className="text-[11px] text-zinc-400 font-medium -mt-1">
-                  Zoom Web Experience
-                </span>
-              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 bg-zinc-800/90 px-1.5 py-0.5 rounded border border-zinc-700/60 ml-0.5">
+                Workplace
+              </span>
             </Link>
 
-            {/* Desktop Navigation Links */}
-            <nav className="hidden md:flex items-center gap-1">
-              {navLinks.map((link) => {
-                const Icon = link.icon;
-                const isActive = pathname === link.href;
-                return (
-                  <Link
-                    key={link.label}
-                    href={link.href}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition ${
-                      isActive
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {link.label}
-                  </Link>
-                );
-              })}
-            </nav>
+            {/* Global Search Bar (Zoom Desktop Client Style) */}
+            <div className="hidden lg:flex items-center relative w-52 xl:w-60 ml-2">
+              <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search (⌘F)"
+                className="w-full pl-8 pr-3 py-1 bg-[#282932] border border-[#3b3c48] rounded-md text-xs text-white placeholder-zinc-400 focus:outline-none focus:border-[#0e71eb] transition"
+              />
+            </div>
           </div>
 
-          {/* Right: Clock & User Info & Settings */}
-          <div className="flex items-center gap-4">
-            {/* Live Clock */}
-            {time && (
-              <div className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-zinc-500 bg-zinc-100/80 px-3 py-1.5 rounded-full border border-zinc-200">
-                <Clock className="w-3.5 h-3.5 text-zinc-400" />
-                <span>{time}</span>
-              </div>
-            )}
+          {/* 2. Center: Zoom Main Tabs (Home, Team Chat, Meetings, Contacts, Whiteboards, Notes) */}
+          <nav className="flex items-center gap-0.5 sm:gap-1">
+            {navTabs.map((tab) => {
+              const Icon = tab.icon;
+              const isSelected = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    if (onTabChange) {
+                      onTabChange(tab.id);
+                    }
+                  }}
+                  type="button"
+                  className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                    isSelected
+                      ? 'bg-[#2b2c37] text-white shadow-xs'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-[#252630]'
+                  }`}
+                >
+                  <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-[#0e71eb]' : 'text-zinc-400'}`} />
+                  <span className="hidden md:inline">{tab.label}</span>
+                  {isSelected && (
+                    <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-[#0e71eb] rounded-full" />
+                  )}
+                </button>
+              );
+            })}
+          </nav>
 
-            {/* Settings Button */}
+          {/* 3. Right: Settings Gear + User Profile with Green "Available" Status */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Settings Gear */}
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className="p-2 text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 rounded-xl transition"
+              className="p-1.5 text-zinc-400 hover:text-white hover:bg-[#2c2d38] rounded-md transition cursor-pointer"
               title="Settings"
             >
-              <Settings className="w-5 h-5" />
+              <Settings className="w-4 h-4" />
             </button>
 
-            {/* Profile Placeholder (Harsh) */}
-            <div className="flex items-center gap-3 pl-2 border-l border-zinc-200">
-              <div className="relative">
-                <div className="w-9 h-9 rounded-full bg-linear-to-tr from-blue-600 to-indigo-600 text-white font-semibold text-sm flex items-center justify-center shadow-xs">
-                  H
+            {/* User Profile Avatar with Presence Indicator */}
+            <div className="relative">
+              <button
+                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                type="button"
+                className="flex items-center gap-2 p-1 rounded-full hover:bg-[#2c2d38] transition cursor-pointer"
+                title="Profile Menu"
+              >
+                <div className="relative">
+                  <div className="w-7 h-7 rounded-full bg-[#0e71eb] text-white font-bold text-xs flex items-center justify-center shadow-xs">
+                    H
+                  </div>
+                  {/* Zoom Green "Available" Online Status Dot */}
+                  <span
+                    className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#0e8a16] border-2 border-[#1b1c20] rounded-full"
+                    title="Available"
+                  />
                 </div>
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
-              </div>
-              <div className="hidden lg:flex flex-col text-left">
-                <span className="text-xs font-semibold text-zinc-800 leading-tight">
+                <span className="hidden sm:inline text-xs font-semibold text-zinc-200">
                   Harsh
                 </span>
-                <span className="text-[11px] text-zinc-400">Host (Default)</span>
-              </div>
+                <ChevronDown className="hidden sm:inline w-3 h-3 text-zinc-400" />
+              </button>
+
+              {/* Zoom Authentic Profile Dropdown Menu */}
+              {isProfileMenuOpen && (
+                <div className="absolute right-0 mt-2 w-72 bg-[#23232b] border border-[#3b3c48] rounded-2xl shadow-2xl z-50 p-3 animate-in zoom-in-95 duration-100 text-left">
+                  {/* Profile Header */}
+                  <div className="flex items-center gap-3 pb-3 border-b border-[#3b3c48]">
+                    <div className="relative">
+                      <div className="w-10 h-10 rounded-full bg-[#0e71eb] text-white font-bold text-base flex items-center justify-center shadow-xs">
+                        H
+                      </div>
+                      <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#0e8a16] border-2 border-[#23232b] rounded-full" />
+                    </div>
+                    <div className="truncate">
+                      <h4 className="text-sm font-bold text-white truncate">Harsh</h4>
+                      <p className="text-xs text-zinc-400 truncate">harsh@workspace.zoom</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="w-2 h-2 rounded-full bg-[#0e8a16]" />
+                        <span className="text-[11px] text-zinc-300 font-medium">Available</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Personal Meeting ID (PMI) Card */}
+                  <div className="py-2.5 border-b border-[#3b3c48]">
+                    <div className="flex items-center justify-between text-[11px] text-zinc-400 font-medium">
+                      <span>Personal Meeting ID (PMI)</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1 px-2.5 py-1.5 bg-[#1b1c22] rounded-lg border border-[#333440]">
+                      <span className="text-xs font-mono font-bold text-white">
+                        847 392 1056
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={handleCopyPMI}
+                          className="p-1 text-zinc-400 hover:text-white transition"
+                          title="Copy ID"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={handleCopyInvite}
+                          className="p-1 text-zinc-400 hover:text-white transition"
+                          title="Copy Invite Link"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Settings & Help */}
+                  <div className="py-2 space-y-1 text-xs">
+                    <button
+                      onClick={() => {
+                        setIsProfileMenuOpen(false);
+                        setIsSettingsOpen(true);
+                      }}
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-zinc-300 hover:text-white hover:bg-[#2f303c] transition"
+                    >
+                      <Settings className="w-4 h-4 text-zinc-400" />
+                      <span>Settings</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsProfileMenuOpen(false);
+                        showToast('Zoom Workplace is up to date (v6.2.0)', 'info');
+                      }}
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-zinc-300 hover:text-white hover:bg-[#2f303c] transition"
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-[#0e8a16]" />
+                      <span>Check for Updates</span>
+                    </button>
+                  </div>
+
+                  <div className="pt-2 border-t border-[#3b3c48]">
+                    <button
+                      onClick={() => {
+                        setIsProfileMenuOpen(false);
+                        showToast('Switching account...', 'info');
+                      }}
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 transition text-xs font-medium"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </header>
 
-      {/* Settings Modal */}
+      {/* Settings Modal (Zoom Desktop Style) */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-zinc-200 p-6">
-            <div className="flex items-center justify-between pb-4 border-b border-zinc-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-[#23232b] border border-[#3b3c48] rounded-2xl max-w-lg w-full p-6 shadow-2xl text-left text-white">
+            <div className="flex items-center justify-between pb-3 border-b border-[#3b3c48]">
               <div className="flex items-center gap-2">
-                <Settings className="w-5 h-5 text-blue-600" />
-                <h3 className="text-lg font-semibold text-zinc-900">
-                  Settings & Environment
-                </h3>
+                <Settings className="w-5 h-5 text-[#0e71eb]" />
+                <h3 className="text-base font-bold">Settings</h3>
               </div>
               <button
                 onClick={() => setIsSettingsOpen(false)}
-                className="p-1 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600"
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="py-4 space-y-4 text-sm text-zinc-600">
-              <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-200 flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-zinc-800">Backend API Endpoint</p>
-                  <p className="text-xs text-zinc-400 font-mono">
-                    {process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}
-                  </p>
+            <div className="py-4 space-y-4 text-xs">
+              <div className="p-3 bg-[#1b1c22] rounded-xl border border-[#333440] space-y-2">
+                <h4 className="font-bold text-sm text-zinc-100">Audio & Video</h4>
+                <p className="text-zinc-400">
+                  Microphone and camera permissions are requested dynamically upon entering the meeting room with seamless animated avatar fallback.
+                </p>
+                <div className="flex items-center gap-2 text-emerald-400 pt-1 font-semibold">
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Hardware WebRTC & Canvas APIs Ready</span>
                 </div>
-                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-100 text-emerald-700">
-                  Online
-                </span>
               </div>
 
-              <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-200 flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-zinc-800">Default Active User</p>
-                  <p className="text-xs text-zinc-400">Harsh (Host role)</p>
-                </div>
-                <ShieldCheck className="w-5 h-5 text-blue-500" />
+              <div className="p-3 bg-[#1b1c22] rounded-xl border border-[#333440] space-y-2">
+                <h4 className="font-bold text-sm text-zinc-100">User Profile</h4>
+                <p className="text-zinc-400">
+                  Default Display Name: <span className="text-white font-bold">Harsh</span>
+                </p>
+                <p className="text-zinc-400">
+                  Personal Meeting ID (PMI): <span className="font-mono text-blue-400 font-bold">847 392 1056</span>
+                </p>
               </div>
 
-              <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-200 flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-zinc-800">Storage Architecture</p>
-                  <p className="text-xs text-zinc-400">Persistent SQLite Database</p>
-                </div>
-                <span className="text-xs font-mono text-zinc-500">zoom_clone.db</span>
+              <div className="p-3 bg-[#1b1c22] rounded-xl border border-[#333440] space-y-2">
+                <h4 className="font-bold text-sm text-zinc-100">Security & Encryption</h4>
+                <p className="text-zinc-400">
+                  End-to-end 256-bit AES encryption simulation enabled with random 6-character alphanumeric passcodes for every meeting.
+                </p>
               </div>
             </div>
 
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => setIsSettingsOpen(false)}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition"
+                className="px-4 py-2 bg-[#0e71eb] hover:bg-[#0b5ed7] text-white rounded-xl text-xs font-semibold transition cursor-pointer"
               >
                 Close
               </button>

@@ -1,80 +1,97 @@
 'use client';
 
 import React from 'react';
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, ChevronDown } from 'lucide-react';
 
 interface ActionCardProps {
   title: string;
-  description: string;
   icon: LucideIcon;
-  colorScheme: 'orange' | 'blue' | 'indigo' | 'zinc';
+  variant: 'orange' | 'blue';
   onClick: () => void;
   isLoading?: boolean;
+  hasDropdown?: boolean;
+  onDropdownClick?: (e: React.MouseEvent) => void;
+  badgeNumber?: number; // e.g. calendar day number like in real Zoom
+  isShareScreen?: boolean;
 }
 
 export function ActionCard({
   title,
-  description,
   icon: Icon,
-  colorScheme,
+  variant,
   onClick,
   isLoading = false,
+  hasDropdown = false,
+  onDropdownClick,
+  badgeNumber,
+  isShareScreen = false,
 }: ActionCardProps) {
-  const colorMap = {
-    orange: {
-      bg: 'bg-orange-500 hover:bg-orange-600 shadow-orange-500/25',
-      ring: 'focus:ring-orange-400',
-      lightBg: 'group-hover:bg-orange-600',
-    },
-    blue: {
-      bg: 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/25',
-      ring: 'focus:ring-blue-400',
-      lightBg: 'group-hover:bg-blue-700',
-    },
-    indigo: {
-      bg: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/25',
-      ring: 'focus:ring-indigo-400',
-      lightBg: 'group-hover:bg-indigo-700',
-    },
-    zinc: {
-      bg: 'bg-zinc-800 hover:bg-zinc-900 shadow-zinc-800/20',
-      ring: 'focus:ring-zinc-400',
-      lightBg: 'group-hover:bg-zinc-900',
-    },
-  };
-
-  const scheme = colorMap[colorScheme];
+  const isOrange = variant === 'orange';
 
   return (
-    <button
-      onClick={onClick}
-      disabled={isLoading}
-      type="button"
-      className="group relative flex flex-col text-left p-6 rounded-2xl bg-white border border-zinc-200/80 shadow-xs hover:shadow-xl hover:border-zinc-300 transition-all duration-200 transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
-    >
-      <div
-        className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white mb-5 shadow-lg transition-transform duration-200 group-hover:scale-105 ${scheme.bg}`}
-      >
-        {isLoading ? (
-          <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-        ) : (
-          <Icon className="w-7 h-7" />
+    <div className="flex flex-col items-center select-none group">
+      {/* Zoom Iconic Rounded Square Button */}
+      <div className="relative">
+        <button
+          onClick={onClick}
+          disabled={isLoading}
+          type="button"
+          className={`w-20 h-20 sm:w-24 sm:h-24 rounded-[22px] sm:rounded-[26px] flex items-center justify-center text-white shadow-md transition-all duration-150 transform active:scale-95 cursor-pointer disabled:opacity-60 relative overflow-hidden ${
+            isOrange
+              ? 'bg-[#ff7426] hover:bg-[#f16315] shadow-orange-500/25 ring-1 ring-orange-400/40'
+              : 'bg-[#0e71eb] hover:bg-[#0b5ed7] shadow-blue-500/25 ring-1 ring-blue-400/40'
+          }`}
+          title={title}
+        >
+          {isLoading ? (
+            <div className="w-8 h-8 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : badgeNumber !== undefined ? (
+            /* Zoom Iconic Schedule Calendar Icon with Today's Date Number */
+            <div className="flex flex-col items-center justify-center w-12 h-12 bg-white/10 rounded-xl border border-white/30 p-1">
+              <span className="text-[9px] font-black uppercase tracking-wider text-white/80">
+                {new Date().toLocaleDateString([], { month: 'short' })}
+              </span>
+              <span className="text-xl sm:text-2xl font-black text-white leading-none">
+                {badgeNumber}
+              </span>
+            </div>
+          ) : isShareScreen ? (
+            /* Zoom Share Screen with Monitor & Upward Arrow */
+            <div className="relative flex items-center justify-center">
+              <div className="w-12 h-9 border-2 border-white rounded-md flex items-center justify-center">
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
+              </div>
+            </div>
+          ) : (
+            <Icon className="w-9 h-9 sm:w-11 sm:h-11 stroke-[1.8]" />
+          )}
+        </button>
+
+        {/* Real Zoom Dropdown Chevron on New Meeting */}
+        {hasDropdown && (
+          <button
+            onClick={onDropdownClick || onClick}
+            type="button"
+            className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white border border-zinc-200 shadow-md flex items-center justify-center text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100 transition cursor-pointer"
+            title="Meeting options"
+          >
+            <ChevronDown className="w-3.5 h-3.5 stroke-[2.5]" />
+          </button>
         )}
       </div>
 
-      <div className="space-y-1">
-        <h3 className="text-lg font-bold text-zinc-900 group-hover:text-blue-600 transition">
-          {title}
-        </h3>
-        <p className="text-xs text-zinc-500 leading-relaxed font-normal">
-          {description}
-        </p>
-      </div>
-
-      <div className="mt-4 flex items-center text-xs font-semibold text-zinc-400 group-hover:text-blue-600 transition">
-        <span>Get started</span>
-        <span className="ml-1 transition-transform group-hover:translate-x-1">→</span>
-      </div>
-    </button>
+      {/* Button Label Underneath */}
+      <span className="mt-2.5 text-xs sm:text-sm font-semibold text-zinc-800 text-center tracking-tight group-hover:text-[#0e71eb] transition">
+        {title}
+      </span>
+    </div>
   );
 }

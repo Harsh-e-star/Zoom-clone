@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, MessageSquare } from 'lucide-react';
+import { X, Send, Smile, ChevronDown, MessageSquare } from 'lucide-react';
 import { Message } from '@/types/meeting';
 
 interface ChatPanelProps {
@@ -21,6 +21,8 @@ export function ChatPanel({
 }: ChatPanelProps) {
   const [inputText, setInputText] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [recipient, setRecipient] = useState('Everyone');
+  const [isRecipientMenuOpen, setIsRecipientMenuOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const scrollToBottom = () => {
@@ -47,7 +49,6 @@ export function ChatPanel({
       await onSendMessage(text);
     } catch (err) {
       console.error('Failed to send chat message:', err);
-      // restore text on failure
       setInputText(text);
     } finally {
       setIsSending(false);
@@ -71,29 +72,28 @@ export function ChatPanel({
   };
 
   return (
-    <aside className="fixed inset-y-0 right-0 z-40 w-full sm:w-80 md:w-88 bg-zinc-900 border-l border-zinc-800 flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800">
-        <div className="flex items-center gap-2 text-white font-semibold text-sm">
-          <MessageSquare className="w-4 h-4 text-blue-400" />
-          <span>In-Meeting Chat</span>
+    <aside className="fixed inset-y-0 right-0 z-40 w-full sm:w-80 md:w-84 bg-[#1b1c22] border-l border-[#2e2f38] flex flex-col shadow-2xl animate-in slide-in-from-right duration-150 select-none text-white font-sans">
+      {/* 1. Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#2e2f38]">
+        <div className="flex items-center gap-2 text-white font-bold text-xs tracking-tight">
+          <span>Meeting Chat</span>
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
+          className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-[#282932] transition cursor-pointer"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Messages Stream */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
+      {/* 2. Messages Stream (Zoom Authentic Transcript Format) */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center text-zinc-500 text-xs">
             <MessageSquare className="w-8 h-8 text-zinc-700 mb-2" />
-            <p>No messages yet.</p>
+            <p className="font-semibold text-zinc-400">Meeting Chat</p>
             <p className="text-[11px] text-zinc-600 mt-0.5">
-              Send a greeting to start the conversation!
+              Messages will be visible to everyone in the room.
             </p>
           </div>
         ) : (
@@ -103,11 +103,8 @@ export function ChatPanel({
 
             if (isSystem) {
               return (
-                <div
-                  key={msg.id}
-                  className="flex justify-center my-2 text-center"
-                >
-                  <span className="px-3 py-1 rounded-full bg-zinc-800/80 text-[11px] text-zinc-400 border border-zinc-700/50">
+                <div key={msg.id} className="flex justify-center my-2 text-center">
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#282932] text-[10px] text-zinc-400 border border-[#3b3c48]">
                     {msg.message}
                   </span>
                 </div>
@@ -115,24 +112,25 @@ export function ChatPanel({
             }
 
             return (
-              <div
-                key={msg.id}
-                className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
-              >
-                <div className="flex items-center gap-2 mb-1 text-[11px] text-zinc-400">
-                  <span className="font-semibold text-zinc-300">
-                    {isMe ? 'You' : msg.sender_name}
+              <div key={msg.id} className="text-left space-y-0.5">
+                {/* Sender Header Line: From {Name} to Everyone: Time */}
+                <div className="text-[11px] text-zinc-400 flex items-center justify-between">
+                  <div className="truncate">
+                    <span className="text-zinc-500">From </span>
+                    <span className="font-bold text-white">
+                      {isMe ? `${msg.sender_name} (me)` : msg.sender_name}
+                    </span>
+                    <span className="text-zinc-500"> to </span>
+                    <span className="text-blue-400 font-medium">Everyone</span>
+                    <span className="text-zinc-500">:</span>
+                  </div>
+                  <span className="text-[10px] text-zinc-500 shrink-0 ml-2">
+                    {formatMsgTime(msg.created_at)}
                   </span>
-                  <span>{formatMsgTime(msg.created_at)}</span>
                 </div>
 
-                <div
-                  className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-xs leading-relaxed break-words shadow-xs ${
-                    isMe
-                      ? 'bg-blue-600 text-white rounded-tr-xs'
-                      : 'bg-zinc-800 text-zinc-100 rounded-tl-xs border border-zinc-700/60'
-                  }`}
-                >
+                {/* Message Text Bubble / Container */}
+                <div className="text-xs text-zinc-100 bg-[#282932] border border-[#3b3c48] rounded-xl px-3 py-2 leading-relaxed break-words shadow-xs">
                   {msg.message}
                 </div>
               </div>
@@ -142,26 +140,75 @@ export function ChatPanel({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Box */}
-      <form onSubmit={handleSend} className="p-3 border-t border-zinc-800 bg-zinc-950/60">
-        <div className="relative flex items-center bg-zinc-800/90 border border-zinc-700 rounded-xl focus-within:ring-2 focus-within:ring-blue-500 transition">
-          <textarea
-            rows={1}
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Type a message (Enter to send)..."
-            className="w-full pl-3 pr-10 py-2.5 bg-transparent text-xs text-white placeholder-zinc-500 resize-none focus:outline-none max-h-24"
-          />
-          <button
-            type="submit"
-            disabled={!inputText.trim() || isSending}
-            className="absolute right-2 p-1.5 rounded-lg text-blue-400 hover:text-white hover:bg-blue-600 disabled:opacity-30 disabled:hover:bg-transparent transition"
-          >
-            <Send className="w-4 h-4" />
-          </button>
+      {/* 3. Zoom Authentic Chat Footer with "To: Everyone" Dropdown */}
+      <div className="p-3 border-t border-[#2e2f38] bg-[#17181e] space-y-2">
+        {/* "To: Everyone" Selector */}
+        <div className="relative">
+          <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+            <span>To:</span>
+            <button
+              type="button"
+              onClick={() => setIsRecipientMenuOpen(!isRecipientMenuOpen)}
+              className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#282932] hover:bg-[#343540] text-blue-400 text-xs font-semibold border border-[#3b3c48] transition cursor-pointer"
+            >
+              <span>{recipient}</span>
+              <ChevronDown className="w-3 h-3" />
+            </button>
+          </div>
+
+          {/* Recipient Dropdown */}
+          {isRecipientMenuOpen && (
+            <div className="absolute bottom-7 left-6 w-36 bg-[#23232b] border border-[#3b3c48] rounded-xl shadow-2xl z-50 py-1 text-xs text-left">
+              <button
+                type="button"
+                onClick={() => {
+                  setRecipient('Everyone');
+                  setIsRecipientMenuOpen(false);
+                }}
+                className="w-full px-3 py-1.5 text-zinc-200 hover:text-white hover:bg-[#2f303c] transition text-left"
+              >
+                Everyone
+              </button>
+            </div>
+          )}
         </div>
-      </form>
+
+        {/* Input Text Box */}
+        <form onSubmit={handleSend} className="relative">
+          <div className="flex flex-col bg-[#282932] border border-[#3b3c48] rounded-xl focus-within:border-[#0e71eb] transition p-2">
+            <textarea
+              rows={2}
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type message here..."
+              className="w-full bg-transparent text-xs text-white placeholder-zinc-500 resize-none focus:outline-none"
+            />
+
+            <div className="flex items-center justify-between pt-1 border-t border-white/5">
+              <div className="flex items-center gap-1 text-zinc-400">
+                <button
+                  type="button"
+                  onClick={() => setInputText((prev) => prev + ' 👍')}
+                  className="p-1 hover:text-white transition cursor-pointer"
+                  title="Emoji"
+                >
+                  <Smile className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                disabled={!inputText.trim() || isSending}
+                className="p-1.5 rounded-lg bg-[#0e71eb] hover:bg-[#0b5ed7] text-white disabled:opacity-30 transition cursor-pointer"
+                title="Send"
+              >
+                <Send className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
     </aside>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
-import { Mic, MicOff, Monitor } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Mic, MicOff, Monitor, Hand, MoreHorizontal, Pin } from 'lucide-react';
 import { Participant } from '@/types/meeting';
 
 interface VideoTileProps {
@@ -13,6 +13,7 @@ interface VideoTileProps {
   isScreenShare?: boolean;
   screenStream?: MediaStream | null;
   isActiveSpeaker?: boolean;
+  hasHandRaised?: boolean;
 }
 
 export function VideoTile({
@@ -24,10 +25,12 @@ export function VideoTile({
   isScreenShare = false,
   screenStream = null,
   isActiveSpeaker = false,
+  hasHandRaised = false,
 }: VideoTileProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
 
-  // Attach stream to HTML5 video element when available
   useEffect(() => {
     if (videoRef.current) {
       if (isScreenShare && screenStream) {
@@ -47,94 +50,131 @@ export function VideoTile({
     .toUpperCase()
     .slice(0, 2);
 
-  // Random consistent gradient for avatars
-  const avatarGradients = [
-    'from-blue-600 to-indigo-700',
-    'from-emerald-600 to-teal-700',
-    'from-purple-600 to-pink-700',
-    'from-amber-600 to-orange-700',
+  // Zoom-style subtle professional avatar colors
+  const avatarColors = [
+    'bg-[#0e71eb]',
+    'bg-[#2d8cff]',
+    'bg-[#3b4856]',
+    'bg-[#2b6cb0]',
   ];
-  const gradientIndex =
+  const colorIndex =
     Math.abs(
       participant.display_name
         .split('')
         .reduce((acc, char) => acc + char.charCodeAt(0), 0)
-    ) % avatarGradients.length;
-  const avatarGrad = avatarGradients[gradientIndex];
+    ) % avatarColors.length;
+  const avatarBg = avatarColors[colorIndex];
 
   return (
     <div
-      className={`relative w-full h-full min-h-[180px] sm:min-h-[220px] rounded-2xl overflow-hidden bg-zinc-900 border transition-all duration-300 flex items-center justify-center select-none shadow-lg ${
-        isActiveSpeaker
-          ? 'border-emerald-500 ring-2 ring-emerald-500/40'
-          : 'border-zinc-800 hover:border-zinc-700'
+      className={`relative w-full h-full min-h-[220px] sm:min-h-[280px] rounded-xl sm:rounded-2xl overflow-hidden bg-[#18181b] flex items-center justify-center select-none shadow-md transition-all duration-150 group ${
+        isActiveSpeaker && !isMuted
+          ? 'border-2 border-[#22c55e]'
+          : 'border border-[#26272e]'
       }`}
     >
-      {/* 1. Video Element (when camera or screen sharing is active) */}
-      {((stream && !isVideoOff) || (isScreenShare && screenStream)) ? (
+      {/* 1. Video Stream Element */}
+      {(stream && !isVideoOff) || (isScreenShare && screenStream) ? (
         <video
           ref={videoRef}
           autoPlay
           playsInline
-          muted={isLocal} // Always mute local video element to avoid audio feedback loop
+          muted={isLocal}
           className={`w-full h-full object-cover ${
             isLocal && !isScreenShare ? 'scale-x-[-1]' : ''
           }`}
         />
       ) : (
-        /* 2. Video Off State: Zoom-style Avatar & Pulsing Voice Ring */
-        <div className="flex flex-col items-center justify-center p-6 text-center">
+        /* 2. Video Off State: Zoom Authentic Circular Initial & Voice Wave */
+        <div className="flex flex-col items-center justify-center p-6">
           <div className="relative">
             <div
-              className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-linear-to-tr ${avatarGrad} flex items-center justify-center text-white text-2xl sm:text-3xl font-bold shadow-2xl tracking-wider`}
+              className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full ${avatarBg} text-white flex items-center justify-center text-2xl sm:text-3xl font-bold shadow-xl tracking-wider select-none`}
             >
               {initials}
             </div>
-            {/* Audio Wave Glow if not muted */}
-            {!isMuted && (
-              <span className="absolute -inset-1.5 rounded-full border-2 border-emerald-500/60 animate-ping pointer-events-none" />
+            {/* Pulsing Audio Ring when Speaking with Video Off */}
+            {isActiveSpeaker && !isMuted && (
+              <span className="absolute -inset-2 rounded-full border-2 border-[#22c55e] animate-ping pointer-events-none" />
             )}
           </div>
         </div>
       )}
 
-      {/* Screen Sharing Watermark Badge */}
-      {isScreenShare && (
-        <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/80 backdrop-blur-md border border-emerald-800 text-[11px] font-semibold text-emerald-300">
-          <Monitor className="w-3.5 h-3.5" />
-          <span>Screen Sharing</span>
-        </div>
-      )}
+      {/* 3. Top-Left Indicators (Raised Hand / Screen Sharing) */}
+      <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10 pointer-events-none">
+        {hasHandRaised && (
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#24252e]/95 text-yellow-400 border border-yellow-500/60 text-xs font-bold shadow-lg animate-bounce">
+            <Hand className="w-4 h-4 fill-current" />
+            <span>Hand Raised</span>
+          </div>
+        )}
 
-      {/* Bottom Bar Details: Name & Mic Status */}
-      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none">
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-white text-xs font-medium max-w-[85%] truncate">
-          {participant.role === 'host' && (
-            <span className="shrink-0 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-blue-600/80 px-1.5 py-0.2 rounded text-white">
-              Host
-            </span>
-          )}
-          <span className="truncate">
-            {participant.display_name}
-            {isLocal ? ' (You)' : ''}
-          </span>
-        </div>
+        {isScreenShare && (
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#132c1c]/90 text-[#22c55e] border border-[#22c55e]/50 text-[10px] font-bold">
+            <Monitor className="w-3 h-3" />
+            <span>Screen</span>
+          </div>
+        )}
 
-        {/* Audio Muted Indicator */}
-        <div
-          className={`p-1.5 rounded-lg backdrop-blur-md border text-xs ${
-            isMuted
-              ? 'bg-rose-950/80 border-rose-800 text-rose-300'
-              : 'bg-black/60 border-white/10 text-emerald-400'
-          }`}
-          title={isMuted ? 'Muted' : 'Speaking'}
-        >
-          {isMuted ? (
-            <MicOff className="w-3.5 h-3.5" />
-          ) : (
-            <Mic className="w-3.5 h-3.5" />
+        {isPinned && (
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-900/80 text-blue-200 text-[10px] font-bold">
+            <Pin className="w-3 h-3" />
+            <span>Pinned</span>
+          </div>
+        )}
+      </div>
+
+      {/* 4. Top-Right Hover Menu (Zoom Desktop Style) */}
+      <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+        <div className="relative">
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            type="button"
+            className="p-1.5 rounded-md bg-black/60 hover:bg-black/80 text-white backdrop-blur-xs transition cursor-pointer"
+            title="Options"
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
+
+          {isMenuOpen && (
+            <div className="absolute right-0 mt-1 w-32 bg-[#23232b] border border-[#3b3c48] rounded-xl shadow-2xl py-1 text-xs text-white z-20 text-left">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPinned(!isPinned);
+                  setIsMenuOpen(false);
+                }}
+                className="w-full px-3 py-1.5 hover:bg-[#2f303c] transition flex items-center gap-2"
+              >
+                <Pin className="w-3.5 h-3.5" />
+                <span>{isPinned ? 'Unpin' : 'Pin'}</span>
+              </button>
+            </div>
           )}
         </div>
+      </div>
+
+      {/* 5. Zoom Authentic Bottom-Left Name Badge */}
+      <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/75 backdrop-blur-xs text-white text-xs font-semibold max-w-[85%] truncate z-10">
+        {/* Muted / Unmuted Icon */}
+        {isMuted ? (
+          <div className="w-4 h-4 rounded-xs bg-[#ff4d4f] flex items-center justify-center shrink-0">
+            <MicOff className="w-2.5 h-2.5 text-white" />
+          </div>
+        ) : (
+          <div className="flex items-center gap-0.5 shrink-0">
+            <Mic className="w-3.5 h-3.5 text-white" />
+            {isActiveSpeaker && (
+              <span className="w-1.5 h-1.5 bg-[#22c55e] rounded-full animate-pulse" />
+            )}
+          </div>
+        )}
+
+        <span className="truncate">
+          {participant.display_name}
+          {isLocal && ' (Host, me)'}
+        </span>
       </div>
     </div>
   );
