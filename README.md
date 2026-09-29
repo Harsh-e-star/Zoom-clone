@@ -7,6 +7,26 @@ MeetSpace is a production-grade, real-time video conferencing web application de
 
 ---
 
+## 🌐 Live Deployment & Demo
+
+| Service | Live URL | Status |
+|---|---|---|
+| **Frontend Web App** | [https://zoom-clone-pink-phi.vercel.app](https://zoom-clone-pink-phi.vercel.app) | Live on Vercel |
+| **Backend API (Swagger Docs)** | [https://meetspace-backend-r3xi.onrender.com/docs](https://meetspace-backend-r3xi.onrender.com/docs) | Live on Render |
+| **Backend Health Check** | [https://meetspace-backend-r3xi.onrender.com/health](https://meetspace-backend-r3xi.onrender.com/health) | `{"status": "healthy"}` |
+| **GitHub Repository** | [https://github.com/Harsh-e-star/Zoom-clone](https://github.com/Harsh-e-star/Zoom-clone) | Public |
+
+### 🔑 Pre-Seeded Evaluator Accounts
+
+| Role | Email | Password | Purpose |
+|---|---|---|---|
+| **Host User** | `harsh@meetspace.local` | `Harsh@12345` | Creating & hosting meetings, host controls, schedule |
+| **Participant User** | `testuser@meetspace.local` | `Test@12345` | Joining via Meeting ID/Link, chat, AV exchange |
+
+*(Note: Users can also register new accounts anytime or join meetings directly.)*
+
+---
+
 ## 🌟 Key Functional Architecture
 
 ```

@@ -36,14 +36,27 @@ app = FastAPI(
 )
 
 # Configure CORS
-cors_origins_env = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
-from app.middleware import InMemoryRateLimiterMiddleware
+cors_origins_env = os.getenv("CORS_ORIGINS", "")
+default_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://zoom-clone-pink-phi.vercel.app",
+]
 
-origins = [origin.strip() for origin in cors_origins_env.split(",") if origin.strip()]
+# Starlette/Browsers reject Access-Control-Allow-Origin: * when credentials are true
+env_origins = [
+    origin.strip()
+    for origin in cors_origins_env.split(",")
+    if origin.strip() and origin.strip() != "*"
+]
+origins = list(dict.fromkeys(default_origins + env_origins))
+
+from app.middleware import InMemoryRateLimiterMiddleware
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
