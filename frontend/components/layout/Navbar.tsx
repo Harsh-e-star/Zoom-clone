@@ -57,15 +57,8 @@ export function Navbar({ activeTab = 'home', onTabChange }: NavbarProps) {
       {/* Zoom Authentic Top Title & Navigation Bar */}
       <header className="sticky top-0 z-40 w-full bg-[#1b1c20] text-white border-b border-[#2d2e36] select-none h-[52px]">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 h-full flex items-center justify-between">
-          {/* 1. Left: Mac Window Traffic Lights + Zoom Workplace Logo */}
+          {/* 1. Left: Zoom Workplace Logo */}
           <div className="flex items-center gap-4">
-            {/* macOS Window Controls (Traffic Lights) */}
-            <div className="hidden sm:flex items-center gap-2 pr-2">
-              <span className="w-3 h-3 rounded-full bg-[#ff5f57] border border-[#e0443e] inline-block shadow-xs" />
-              <span className="w-3 h-3 rounded-full bg-[#febc2e] border border-[#d89e24] inline-block shadow-xs" />
-              <span className="w-3 h-3 rounded-full bg-[#28c840] border border-[#1aab29] inline-block shadow-xs" />
-            </div>
-
             {/* Zoom Authentic Logo */}
             <Link href="/" className="flex items-center gap-1.5 group">
               <div className="flex items-center text-[#0e71eb] font-extrabold text-2xl tracking-tighter hover:opacity-95 transition">
