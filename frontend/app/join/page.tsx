@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Video, ArrowLeft, AlertCircle, Loader2, User } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { getMeeting, cleanMeetingId } from '@/lib/api';
 
 function JoinContent() {
@@ -50,7 +50,7 @@ function JoinContent() {
           : 'Meeting not found. Please check the meeting ID.';
       setErrorMessage(
         msg.includes('404') || msg.toLowerCase().includes('not found')
-          ? 'Meeting not found. Please check the meeting ID.'
+          ? 'Meeting not found. Please check the meeting ID or link.'
           : msg
       );
     } finally {
@@ -59,34 +59,44 @@ function JoinContent() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-500 hover:text-zinc-800 transition mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Dashboard</span>
+    <div className="min-h-screen bg-[#f7f9fa] flex flex-col font-sans select-none text-[#232333]">
+      {/* Zoom Official Web Header */}
+      <header className="w-full bg-white border-b border-[#e4e7eb] px-6 sm:px-12 py-3.5 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-1 group">
+          <span className="text-[#0e71eb] font-extrabold text-3xl tracking-tighter">
+            zoom
+          </span>
         </Link>
 
-        <div className="flex items-center justify-center gap-3 mb-2">
-          <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-            <Video className="w-7 h-7 fill-current" />
-          </div>
+        <div className="flex items-center gap-6 text-xs font-semibold text-zinc-600">
+          <Link href="/" className="hover:text-[#0e71eb] transition">
+            Workplace
+          </Link>
+          <Link href="/schedule" className="hover:text-[#0e71eb] transition hidden sm:inline">
+            Schedule
+          </Link>
+          <Link
+            href="/"
+            className="px-3.5 py-1.5 rounded-lg border border-[#0e71eb] text-[#0e71eb] hover:bg-blue-50 transition"
+          >
+            Dashboard
+          </Link>
         </div>
-        <h2 className="text-center text-2xl font-extrabold text-zinc-900 tracking-tight">
-          Join a Meeting
-        </h2>
-        <p className="mt-1 text-center text-xs text-zinc-500">
-          Enter your meeting details to connect with participants
-        </p>
-      </div>
+      </header>
 
-      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md px-4">
-        <div className="bg-white py-8 px-6 shadow-xl rounded-2xl sm:px-8 border border-zinc-200">
-          <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Main Join Card (Exact Zoom.us/join design) */}
+      <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
+        <div className="max-w-md w-full bg-white border border-[#e4e7eb] rounded-2xl shadow-sm p-8 sm:p-10 text-center">
+          <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 tracking-tight">
+            Join a Meeting
+          </h1>
+          <p className="text-xs text-zinc-500 mt-2">
+            Connect to video, audio, and team chat in seconds
+          </p>
+
+          <form onSubmit={handleSubmit} className="mt-8 space-y-4 text-left">
             {errorMessage && (
-              <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium">
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium">
                 <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                 <span>{errorMessage}</span>
               </div>
@@ -94,72 +104,71 @@ function JoinContent() {
 
             <div>
               <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">
-                Meeting ID or Invite Link
+                Meeting ID or Personal Link Name
               </label>
               <input
                 type="text"
                 required
-                placeholder="e.g. 847 392 1056"
+                placeholder="e.g. 847 392 1056 or complete URL"
                 value={meetingInput}
                 onChange={(e) => setMeetingInput(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-300 rounded-xl text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
+                className="w-full px-4 py-3 bg-white border border-zinc-300 rounded-xl text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-[#0e71eb] focus:ring-2 focus:ring-[#0e71eb]/20 transition"
               />
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">
-                Your Screen Name
+                Your Name
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
-                  <User className="w-4 h-4" />
-                </div>
-                <input
-                  type="text"
-                  required
-                  placeholder="Enter your name"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full pl-9 pr-3.5 py-2.5 bg-zinc-50 border border-zinc-300 rounded-xl text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
-                />
-              </div>
+              <input
+                type="text"
+                required
+                placeholder="Enter your screen name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="w-full px-4 py-3 bg-white border border-zinc-300 rounded-xl text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-[#0e71eb] focus:ring-2 focus:ring-[#0e71eb]/20 transition"
+              />
             </div>
 
-            <div className="pt-2 space-y-2 border-t border-zinc-100">
-              <label className="flex items-center gap-2.5 text-xs text-zinc-600 cursor-pointer select-none">
+            {/* Audio & Video Toggles */}
+            <div className="pt-2 space-y-2 border-t border-zinc-100 text-xs text-zinc-600">
+              <label className="flex items-center gap-2.5 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={turnOffVideo}
                   onChange={(e) => setTurnOffVideo(e.target.checked)}
-                  className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-zinc-300"
+                  className="w-4 h-4 rounded text-[#0e71eb] focus:ring-[#0e71eb] border-zinc-300"
                 />
                 <span>Turn off my video</span>
               </label>
 
-              <label className="flex items-center gap-2.5 text-xs text-zinc-600 cursor-pointer select-none">
+              <label className="flex items-center gap-2.5 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={muteAudio}
                   onChange={(e) => setMuteAudio(e.target.checked)}
-                  className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-zinc-300"
+                  className="w-4 h-4 rounded text-[#0e71eb] focus:ring-[#0e71eb] border-zinc-300"
                 />
-                <span>Mute my microphone</span>
+                <span>Do not connect to audio</span>
               </label>
             </div>
 
-            <div className="pt-3">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 shadow-md shadow-blue-500/20 transition"
-              >
-                {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                <span>Join Meeting</span>
-              </button>
-            </div>
+            <p className="text-[11px] text-zinc-400 leading-relaxed pt-2">
+              By clicking &quot;Join&quot;, you agree to our Terms of Service and Privacy Statement.
+            </p>
+
+            {/* Official Zoom Join Button */}
+            <button
+              type="submit"
+              disabled={isLoading || !meetingInput.trim()}
+              className="w-full py-3 px-4 rounded-xl text-sm font-bold text-white bg-[#0e71eb] hover:bg-[#0b5ed7] disabled:opacity-40 disabled:hover:bg-[#0e71eb] shadow-md transition flex items-center justify-center gap-2 cursor-pointer mt-4"
+            >
+              {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+              <span>Join</span>
+            </button>
           </form>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
@@ -168,8 +177,8 @@ export default function JoinPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        <div className="min-h-screen bg-[#f7f9fa] flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-[#0e71eb] animate-spin" />
         </div>
       }
     >
