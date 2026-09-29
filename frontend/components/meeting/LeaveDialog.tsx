@@ -6,6 +6,7 @@ interface LeaveDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirmLeave: () => void;
+  onEndMeetingForAll?: () => void;
   isHost?: boolean;
 }
 
@@ -13,6 +14,7 @@ export function LeaveDialog({
   isOpen,
   onClose,
   onConfirmLeave,
+  onEndMeetingForAll,
   isHost = true,
 }: LeaveDialogProps) {
   if (!isOpen) return null;
@@ -34,7 +36,7 @@ export function LeaveDialog({
             <>
               {/* Zoom Authentic Red "End Meeting for All" */}
               <button
-                onClick={onConfirmLeave}
+                onClick={onEndMeetingForAll || onConfirmLeave}
                 type="button"
                 className="w-full py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-[#e02828] hover:bg-[#c91f1f] shadow-md transition active:scale-98 cursor-pointer"
               >

@@ -61,6 +61,12 @@ export interface CreateParticipantDto {
   is_camera_off?: boolean;
 }
 
+export interface ParticipantUpdateDto {
+  is_muted?: boolean;
+  is_camera_off?: boolean;
+  role?: 'host' | 'participant' | 'co-host';
+}
+
 export interface SendMessageDto {
   sender_name: string;
   sender_role?: string;

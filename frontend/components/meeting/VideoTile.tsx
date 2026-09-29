@@ -1,11 +1,20 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Mic, MicOff, Monitor, Hand, MoreHorizontal, Pin } from 'lucide-react';
+import { Mic, MicOff, Monitor, Hand, MoreHorizontal, Pin, Volume2 } from 'lucide-react';
 import { Participant } from '@/types/meeting';
+import { WebRTCParticipant } from '@/types/webrtc';
 
 interface VideoTileProps {
-  participant: Participant;
+  participant: Participant | WebRTCParticipant | {
+    id?: number | string;
+    participant_id?: string;
+    display_name: string;
+    role?: string;
+    is_muted?: boolean;
+    is_camera_off?: boolean;
+    camera_enabled?: boolean;
+  };
   isLocal?: boolean;
   stream?: MediaStream | null;
   isMuted?: boolean;
@@ -28,20 +37,55 @@ export function VideoTile({
   hasHandRaised = false,
 }: VideoTileProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
+  const [needsAudioInteraction, setNeedsAudioInteraction] = useState(false);
 
+  // Manage Video element source
   useEffect(() => {
     if (videoRef.current) {
       if (isScreenShare && screenStream) {
-        videoRef.current.srcObject = screenStream;
+        if (videoRef.current.srcObject !== screenStream) {
+          videoRef.current.srcObject = screenStream;
+        }
       } else if (stream && !isVideoOff) {
-        videoRef.current.srcObject = stream;
+        if (videoRef.current.srcObject !== stream) {
+          videoRef.current.srcObject = stream;
+        }
       } else {
         videoRef.current.srcObject = null;
       }
     }
   }, [stream, screenStream, isVideoOff, isScreenShare]);
+
+  // Manage Remote Audio element source (Guaranteed audio even if camera is off)
+  useEffect(() => {
+    if (!isLocal && stream && audioRef.current) {
+      if (audioRef.current.srcObject !== stream) {
+        audioRef.current.srcObject = stream;
+      }
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setNeedsAudioInteraction(false);
+          })
+          .catch((err) => {
+            if (err.name !== 'AbortError') {
+              console.warn('[VideoTile] Remote audio autoplay blocked:', err);
+              setNeedsAudioInteraction(true);
+            }
+          });
+      }
+    }
+  }, [stream, isLocal]);
+
+  const handleEnableAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.play().then(() => setNeedsAudioInteraction(false)).catch(console.warn);
+    }
+  };
 
   const initials = participant.display_name
     .split(' ')
@@ -67,6 +111,9 @@ export function VideoTile({
 
   return (
     <div
+      data-testid={isLocal ? "local-video-tile" : "remote-video-tile"}
+      data-local={isLocal ? "true" : "false"}
+      data-video-off={isVideoOff ? "true" : "false"}
       className={`relative w-full h-full min-h-[220px] sm:min-h-[280px] rounded-xl sm:rounded-2xl overflow-hidden bg-[#18181b] flex items-center justify-center select-none shadow-md transition-all duration-150 group ${
         isActiveSpeaker && !isMuted
           ? 'border-2 border-[#22c55e]'
@@ -176,6 +223,25 @@ export function VideoTile({
           {isLocal && ' (Host, me)'}
         </span>
       </div>
+
+      {/* 6. Hidden Remote Audio Element (Always alive for peer audio) */}
+      {!isLocal && stream && (
+        <audio ref={audioRef} autoPlay playsInline className="hidden" />
+      )}
+
+      {/* 7. Autoplay Blocked Banner */}
+      {needsAudioInteraction && (
+        <div
+          onClick={handleEnableAudio}
+          className="absolute inset-0 z-20 bg-black/70 backdrop-blur-xs flex flex-col items-center justify-center p-4 text-center cursor-pointer hover:bg-black/60 transition"
+        >
+          <div className="w-10 h-10 rounded-full bg-[#0e71eb] text-white flex items-center justify-center mb-2 shadow-lg animate-pulse">
+            <Volume2 className="w-5 h-5" />
+          </div>
+          <p className="text-xs font-bold text-white mb-0.5">Audio Blocked by Browser</p>
+          <p className="text-[11px] text-zinc-300">Click to enable remote audio</p>
+        </div>
+      )}
     </div>
   );
 }

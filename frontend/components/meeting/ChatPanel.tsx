@@ -3,13 +3,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, Smile, ChevronDown, MessageSquare } from 'lucide-react';
 import { Message } from '@/types/meeting';
+import { InMeetingChatMessage } from '@/types/webrtc';
 
 interface ChatPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  messages: Message[];
+  messages: (Message | InMeetingChatMessage)[];
   currentUserName: string;
-  onSendMessage: (text: string) => Promise<void>;
+  onSendMessage: (text: string) => Promise<void> | void;
 }
 
 export function ChatPanel({

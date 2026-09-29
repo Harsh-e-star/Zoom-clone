@@ -13,16 +13,17 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { Participant } from '@/types/meeting';
+import { WebRTCParticipant } from '@/types/webrtc';
 import { useToast } from '../ui/Toast';
 
 interface ParticipantPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  participants: Participant[];
+  participants: (Participant | WebRTCParticipant)[];
   currentUserId?: number;
   onMuteAll: () => void;
-  onRemoveParticipant: (id: number) => void;
-  onToggleMute: (id: number, currentMuted: boolean) => void;
+  onRemoveParticipant: (id: string | number) => void;
+  onToggleMute: (id: string | number, currentMuted: boolean) => void;
 }
 
 export function ParticipantPanel({
@@ -35,7 +36,7 @@ export function ParticipantPanel({
 }: ParticipantPanelProps) {
   const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
+  const [activeMenuId, setActiveMenuId] = useState<string | number | null>(null);
   const [isMuteAllModalOpen, setIsMuteAllModalOpen] = useState(false);
   const [allowSelfUnmute, setAllowSelfUnmute] = useState(true);
 
@@ -89,13 +90,15 @@ export function ParticipantPanel({
         {/* 3. Participants List */}
         <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
           {filtered.map((p) => {
-            const isHost = p.role === 'host' || p.display_name === 'Harsh';
-            const isMe = p.display_name === 'Harsh';
-            const isMenuOpen = activeMenuId === p.id;
+            const pid = ('participant_id' in p && p.participant_id) ? p.participant_id : ('id' in p ? p.id : p.display_name);
+            const isHost = p.role === 'host' || p.display_name.toLowerCase() === 'harsh';
+            const isMe = p.display_name.toLowerCase() === 'harsh';
+            const isMenuOpen = activeMenuId === pid;
+            const isCameraOff = 'is_camera_off' in p ? p.is_camera_off : !p.camera_enabled;
 
             return (
               <div
-                key={p.id}
+                key={pid}
                 className="relative flex items-center justify-between px-2.5 py-2 rounded-lg hover:bg-[#282932] transition group text-xs text-zinc-200"
               >
                 {/* Left: Avatar & Name */}
@@ -120,7 +123,7 @@ export function ParticipantPanel({
                     ) : (
                       <Mic className="w-3.5 h-3.5 text-zinc-300" />
                     )}
-                    {p.is_camera_off ? (
+                    {isCameraOff ? (
                       <VideoOff className="w-3.5 h-3.5 text-zinc-500" />
                     ) : (
                       <Video className="w-3.5 h-3.5 text-zinc-300" />
@@ -130,7 +133,7 @@ export function ParticipantPanel({
                   {/* Zoom Hover Action Buttons: [Mute] [More] */}
                   <div className="hidden group-hover:flex items-center gap-1">
                     <button
-                      onClick={() => onToggleMute(p.id, p.is_muted)}
+                      onClick={() => onToggleMute(pid, p.is_muted)}
                       type="button"
                       className="px-2 py-0.5 bg-[#0e71eb] hover:bg-[#0b5ed7] text-white rounded text-[11px] font-bold transition cursor-pointer"
                     >
@@ -140,7 +143,7 @@ export function ParticipantPanel({
                     {!isMe && (
                       <div className="relative">
                         <button
-                          onClick={() => setActiveMenuId(isMenuOpen ? null : p.id)}
+                          onClick={() => setActiveMenuId(isMenuOpen ? null : pid)}
                           type="button"
                           className="px-1.5 py-0.5 bg-[#3a3b47] hover:bg-[#484957] text-zinc-200 rounded text-[11px] font-semibold transition cursor-pointer"
                         >
@@ -151,7 +154,7 @@ export function ParticipantPanel({
                           <div className="absolute right-0 mt-1 w-32 rounded-xl bg-[#23232b] border border-[#3b3c48] shadow-2xl z-50 py-1 text-xs text-left">
                             <button
                               onClick={() => {
-                                onRemoveParticipant(p.id);
+                                onRemoveParticipant(pid);
                                 setActiveMenuId(null);
                                 showToast(`${p.display_name} removed`, 'info');
                               }}

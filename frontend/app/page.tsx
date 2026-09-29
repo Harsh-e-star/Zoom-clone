@@ -20,7 +20,8 @@ import {
   PenTool,
   FileText,
 } from 'lucide-react';
-import { Navbar } from '@/components/layout/Navbar';
+import { Header } from '@/components/layout/Header';
+import { useAuth } from '@/providers/AuthProvider';
 import { ActionCard } from '@/components/dashboard/ActionCard';
 import { UpcomingMeetings } from '@/components/dashboard/UpcomingMeetings';
 import { RecentMeetings } from '@/components/dashboard/RecentMeetings';
@@ -39,6 +40,7 @@ import {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const { showToast } = useToast();
 
   const [activeTab, setActiveTab] = useState<'home' | 'meetings' | 'chat' | 'contacts' | 'whiteboards' | 'notes'>('home');
@@ -212,12 +214,35 @@ export default function DashboardPage() {
       ? pmiMeeting
       : upcomingMeetings.find((m) => m.meeting_id === selectedMeetingId) || pmiMeeting;
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+
   return (
     <div className="min-h-screen bg-[#f4f5f8] text-[#232333] flex flex-col font-sans select-none">
-      <Navbar activeTab={activeTab} onTabChange={(tab) => setActiveTab(tab as 'home' | 'meetings' | 'chat' | 'contacts' | 'whiteboards' | 'notes')} />
+      <Header activeTab="home" />
 
       {/* Main Content Body */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+        {/* Dynamic Greeting per Requirement 14 */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900">
+              {getGreeting()}, {user?.name || 'Harsh'}
+            </h1>
+            <p className="text-xs text-zinc-500 mt-1">
+              Welcome to MeetSpace Workplace. Ready to collaborate?
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-zinc-600 bg-white border border-zinc-200/80 px-3.5 py-1.5 rounded-full shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Personal Meeting ID: 847 392 1056</span>
+          </div>
+        </div>
+
         {/* Error notification banner if API is unreachable */}
         {error && (
           <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-center justify-between shadow-xs">

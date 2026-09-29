@@ -9,7 +9,7 @@ import { useToast } from '../ui/Toast';
 interface MeetingInfoModalProps {
   isOpen: boolean;
   onClose: () => void;
-  meeting: MeetingDetail;
+  meeting: MeetingDetail | null;
 }
 
 export function MeetingInfoModal({
@@ -20,7 +20,7 @@ export function MeetingInfoModal({
   const { showToast } = useToast();
   const [showPasscode, setShowPasscode] = useState(false);
 
-  if (!isOpen) return null;
+  if (!isOpen || !meeting) return null;
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard?.writeText(text);

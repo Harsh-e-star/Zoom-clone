@@ -1,32 +1,65 @@
 # Dependencies
 node_modules/
 backend/venv/
+.venv/
+venv/
+env/
 
-# Next.js build
+# Next.js & Build outputs
 frontend/.next/
 frontend/out/
+.next/
+out/
+dist/
+build/
+.turbo/
 
-# Environment files
+# Environment files (keep examples)
 .env
 .env.local
+.env.*.local
 backend/.env
 frontend/.env.local
+frontend/.env
 !.env.example
 !*.env.example
 !*.env.local.example
 
-# SQLite Database
+# SQLite Database & Write-Ahead Logs
 *.db
+*.db-shm
+*.db-wal
 *.sqlite3
 
-# Python bytecode & cache
+# Python bytecode, typing & test caches
 __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.coverage
+htmlcov/
 
-# OS and IDE files
+# Test output & Playwright reports
+test-results/
+playwright-report/
+blob-report/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS and IDE configuration files
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# Scratch & Temporary files
+scratch/
+*.tmp

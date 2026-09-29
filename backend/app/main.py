@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from app.database import engine, Base, SessionLocal
-from app.routers import meetings, participants, messages
+from app.routers import auth, users, settings, meetings, participants, messages, signaling
 from app import crud
 
 
@@ -21,7 +21,7 @@ async def lifespan(app: FastAPI):
     # 2. Seed initial realistic data if DB is newly initialized
     db = SessionLocal()
     try:
-        crud.seed_sample_data(db)
+        crud.seed_database_if_empty(db)
     finally:
         db.close()
 
@@ -37,6 +37,8 @@ app = FastAPI(
 
 # Configure CORS
 cors_origins_env = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
+from app.middleware import InMemoryRateLimiterMiddleware
+
 origins = [origin.strip() for origin in cors_origins_env.split(",") if origin.strip()]
 
 app.add_middleware(
@@ -46,6 +48,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(InMemoryRateLimiterMiddleware)
 
 
 @app.exception_handler(Exception)
@@ -61,9 +64,13 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 # Include Routers
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(settings.router)
 app.include_router(meetings.router)
 app.include_router(participants.router)
 app.include_router(messages.router)
+app.include_router(signaling.router)
 
 
 @app.get("/")
@@ -76,10 +83,12 @@ def root():
     }
 
 
+@app.get("/health")
 @app.get("/api/health")
 def health_check():
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
         "database": "connected",
+        "version": "1.0.0",
     }

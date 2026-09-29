@@ -10,9 +10,10 @@ import {
   Info,
   Clock,
   ChevronDown,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
-import { useMeeting } from '@/lib/hooks/useMeeting';
-import { useLocalMedia } from '@/lib/hooks/useLocalMedia';
+import { useWebRTCMeeting } from '@/lib/hooks/useWebRTCMeeting';
 import { VideoTile } from './VideoTile';
 import { MeetingControls } from './MeetingControls';
 import { ParticipantPanel } from './ParticipantPanel';
@@ -30,40 +31,51 @@ export function MeetingRoom({ meetingId }: MeetingRoomProps) {
   const router = useRouter();
   const { showToast } = useToast();
 
-  // Read stored screen name preference or default to Harsh
+  // Read stored user name from auth storage or preference, defaulting to Harsh
   const [userName] = useState<string>(() => {
     if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('meetspace_user');
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          if (parsed && parsed.name) return parsed.name;
+        } catch {}
+      }
       return sessionStorage.getItem('meetspace_user_name') || 'Harsh';
     }
     return 'Harsh';
   });
 
-  // State hooks
+
+  // Comprehensive WebRTC Meeting Hook (Signaling, Media, Peer Mesh, Host Moderation)
   const {
     meeting,
-    participants,
-    messages,
+    meetingTitle,
+    isHost,
     isLoading,
     error,
-    reactions,
     durationFormatted,
-    sendChat,
-    muteAll,
-    removeUser,
-    toggleParticipantMute,
-    triggerReaction,
-  } = useMeeting(meetingId, userName);
-
-  const {
-    stream,
+    connectionStatus,
+    localParticipant,
+    remoteParticipants,
+    localStream,
     screenStream,
+    remoteStreams,
     isMuted,
     isVideoOff,
     isScreenSharing,
     toggleMute,
     toggleVideo,
     toggleScreenShare,
-  } = useLocalMedia();
+    sendChat,
+    messages,
+    reactions,
+    triggerReaction,
+    hostMuteAll,
+    hostRemoveParticipant,
+    hostEndMeeting,
+    leaveMeeting,
+  } = useWebRTCMeeting(meetingId, userName);
 
   // Panel & Action states
   const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
@@ -107,10 +119,6 @@ export function MeetingRoom({ meetingId }: MeetingRoomProps) {
     );
   };
 
-  const handleConfirmLeave = () => {
-    router.push('/');
-  };
-
   if (isLoading) {
     return (
       <div className="h-screen w-full bg-[#000000] flex flex-col items-center justify-center text-white">
@@ -119,7 +127,7 @@ export function MeetingRoom({ meetingId }: MeetingRoomProps) {
     );
   }
 
-  if (error || !meeting) {
+  if (error && !meeting) {
     return (
       <div className="h-screen w-full bg-[#000000] flex flex-col items-center justify-center text-white p-6 text-center select-none font-sans">
         <div className="max-w-md p-8 bg-[#1f2026] border border-[#3b3c48] rounded-3xl shadow-2xl">
@@ -132,31 +140,17 @@ export function MeetingRoom({ meetingId }: MeetingRoomProps) {
           </p>
           <button
             onClick={() => router.push('/')}
-            className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold bg-[#0e71eb] hover:bg-[#0b5ed7] text-white transition cursor-pointer"
+            className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold bg-[#0b5cff] hover:bg-[#004be5] text-white transition cursor-pointer"
           >
-            Return to Zoom Workplace
+            Return to MeetSpace Workplace
           </button>
         </div>
       </div>
     );
   }
 
-  // Find local user in participants or create placeholder
-  const localParticipant = participants.find(
-    (p) => p.display_name === userName
-  ) || {
-    id: 9999,
-    meeting_id: meeting.meeting_id,
-    display_name: userName,
-    role: (userName === 'Harsh' ? 'host' : 'participant') as 'host' | 'participant',
-    is_muted: isMuted,
-    is_camera_off: isVideoOff,
-    joined_at: new Date().toISOString(),
-  };
-
-  const remoteParticipants = participants.filter(
-    (p) => p.display_name !== userName
-  );
+  // Check if any remote peer is sharing screen
+  const remoteScreenSharer = remoteParticipants.find((p) => p.screen_sharing);
 
   return (
     <div className="relative h-screen w-full bg-[#000000] flex flex-col overflow-hidden text-white font-sans select-none">
@@ -179,8 +173,26 @@ export function MeetingRoom({ meetingId }: MeetingRoomProps) {
 
           <div className="flex items-center gap-2">
             <h1 className="text-xs sm:text-sm font-bold text-zinc-100 truncate max-w-xs sm:max-w-md">
-              {meeting.title}
+              {meetingTitle || meeting?.title || 'MeetSpace Meeting'}
             </h1>
+          </div>
+
+          {/* Connection Quality Indicator */}
+          <div
+            className={`hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border ${
+              connectionStatus === 'connected'
+                ? 'bg-emerald-950/40 border-emerald-800 text-emerald-400'
+                : connectionStatus === 'reconnecting'
+                ? 'bg-amber-950/40 border-amber-800 text-amber-400 animate-pulse'
+                : 'bg-rose-950/40 border-rose-800 text-rose-400'
+            }`}
+          >
+            {connectionStatus === 'connected' ? (
+              <Wifi className="w-3 h-3 text-emerald-400" />
+            ) : (
+              <WifiOff className="w-3 h-3 text-amber-400" />
+            )}
+            <span className="capitalize">{connectionStatus}</span>
           </div>
         </div>
 
@@ -283,7 +295,7 @@ export function MeetingRoom({ meetingId }: MeetingRoomProps) {
           ))}
         </div>
 
-        {/* Case A: Screen Sharing Active -> Presentation Mode */}
+        {/* Case A: Screen Sharing Active (Local or Remote) -> Presentation Mode */}
         {isScreenSharing && screenStream ? (
           <div className="w-full h-full flex flex-col lg:flex-row gap-3">
             {/* Main Screen Stream */}
@@ -302,18 +314,55 @@ export function MeetingRoom({ meetingId }: MeetingRoomProps) {
                 <VideoTile
                   participant={localParticipant}
                   isLocal={true}
-                  stream={stream}
+                  stream={localStream}
                   isMuted={isMuted}
                   isVideoOff={isVideoOff}
                   hasHandRaised={hasHandRaised}
                 />
               </div>
               {remoteParticipants.map((p) => (
-                <div key={p.id} className="w-48 lg:w-full h-32 shrink-0">
+                <div key={p.participant_id} className="w-48 lg:w-full h-32 shrink-0">
                   <VideoTile
                     participant={p}
+                    stream={remoteStreams[p.participant_id] || null}
                     isMuted={p.is_muted}
-                    isVideoOff={p.is_camera_off}
+                    isVideoOff={!p.camera_enabled}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : remoteScreenSharer ? (
+          <div className="w-full h-full flex flex-col lg:flex-row gap-3">
+            {/* Remote Screen Stream */}
+            <div className="flex-1 h-full min-h-[300px]">
+              <VideoTile
+                participant={remoteScreenSharer}
+                isScreenShare={true}
+                screenStream={remoteStreams[remoteScreenSharer.participant_id] || null}
+                stream={remoteStreams[remoteScreenSharer.participant_id] || null}
+              />
+            </div>
+
+            {/* Side Filmstrip */}
+            <div className="w-full lg:w-72 flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto shrink-0 max-h-48 lg:max-h-full">
+              <div className="w-48 lg:w-full h-32 shrink-0">
+                <VideoTile
+                  participant={localParticipant}
+                  isLocal={true}
+                  stream={localStream}
+                  isMuted={isMuted}
+                  isVideoOff={isVideoOff}
+                  hasHandRaised={hasHandRaised}
+                />
+              </div>
+              {remoteParticipants.map((p) => (
+                <div key={p.participant_id} className="w-48 lg:w-full h-32 shrink-0">
+                  <VideoTile
+                    participant={p}
+                    stream={remoteStreams[p.participant_id] || null}
+                    isMuted={p.is_muted}
+                    isVideoOff={!p.camera_enabled}
                   />
                 </div>
               ))}
@@ -336,7 +385,7 @@ export function MeetingRoom({ meetingId }: MeetingRoomProps) {
             <VideoTile
               participant={localParticipant}
               isLocal={true}
-              stream={stream}
+              stream={localStream}
               isMuted={isMuted}
               isVideoOff={isVideoOff}
               isActiveSpeaker={!isMuted}
@@ -346,10 +395,11 @@ export function MeetingRoom({ meetingId }: MeetingRoomProps) {
             {/* Remote Participants Video Tiles */}
             {remoteParticipants.map((p, idx) => (
               <VideoTile
-                key={p.id}
+                key={p.participant_id}
                 participant={p}
+                stream={remoteStreams[p.participant_id] || null}
                 isMuted={p.is_muted}
-                isVideoOff={p.is_camera_off}
+                isVideoOff={!p.camera_enabled}
                 isActiveSpeaker={idx === 0 && !p.is_muted}
               />
             ))}
@@ -366,9 +416,9 @@ export function MeetingRoom({ meetingId }: MeetingRoomProps) {
         isChatOpen={isChatOpen}
         isRecording={isRecording}
         hasHandRaised={hasHandRaised}
-        participantCount={participants.length || 1}
+        participantCount={1 + remoteParticipants.length}
         unreadCount={0}
-        isHost={userName === 'Harsh'}
+        isHost={isHost}
         onToggleMute={toggleMute}
         onToggleVideo={toggleVideo}
         onToggleScreenShare={toggleScreenShare}
@@ -391,10 +441,10 @@ export function MeetingRoom({ meetingId }: MeetingRoomProps) {
       <ParticipantPanel
         isOpen={isParticipantsOpen}
         onClose={() => setIsParticipantsOpen(false)}
-        participants={participants}
-        onMuteAll={muteAll}
-        onRemoveParticipant={removeUser}
-        onToggleMute={toggleParticipantMute}
+        participants={[localParticipant, ...remoteParticipants]}
+        onMuteAll={hostMuteAll}
+        onRemoveParticipant={(id) => hostRemoveParticipant(String(id))}
+        onToggleMute={(id) => console.log('Toggle mute for participant:', id)}
       />
 
       <ChatPanel
@@ -409,8 +459,9 @@ export function MeetingRoom({ meetingId }: MeetingRoomProps) {
       <LeaveDialog
         isOpen={isLeaveOpen}
         onClose={() => setIsLeaveOpen(false)}
-        onConfirmLeave={handleConfirmLeave}
-        isHost={userName === 'Harsh'}
+        onConfirmLeave={leaveMeeting}
+        onEndMeetingForAll={hostEndMeeting}
+        isHost={isHost}
       />
 
       <MeetingInfoModal

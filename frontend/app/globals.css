@@ -39,3 +39,9 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(140, 140, 140, 0.7);
 }
+
+/* Ensure Next.js dev overlay never captures pointer events */
+nextjs-portal {
+  pointer-events: none !important;
+}
+
