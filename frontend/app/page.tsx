@@ -352,11 +352,17 @@ export default function DashboardPage() {
                 {/* Time & Date Display */}
                 <div>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl sm:text-5xl font-extrabold tracking-tight font-sans">
+                    <span
+                      suppressHydrationWarning
+                      className="text-4xl sm:text-5xl font-extrabold tracking-tight font-sans"
+                    >
                       {currentTime || '12:00 PM'}
                     </span>
                   </div>
-                  <p className="text-xs sm:text-sm font-medium text-slate-300 mt-1">
+                  <p
+                    suppressHydrationWarning
+                    className="text-xs sm:text-sm font-medium text-slate-300 mt-1"
+                  >
                     {currentDate || 'Tuesday, September 29, 2026'}
                   </p>
                 </div>

@@ -48,10 +48,16 @@ export function ActionCard({
           ) : badgeNumber !== undefined ? (
             /* Zoom Iconic Schedule Calendar Icon with Today's Date Number */
             <div className="flex flex-col items-center justify-center w-12 h-12 bg-white/10 rounded-xl border border-white/30 p-1">
-              <span className="text-[9px] font-black uppercase tracking-wider text-white/80">
-                {new Date().toLocaleDateString([], { month: 'short' })}
+              <span
+                suppressHydrationWarning
+                className="text-[9px] font-black uppercase tracking-wider text-white/80"
+              >
+                {['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][new Date().getMonth()]}
               </span>
-              <span className="text-xl sm:text-2xl font-black text-white leading-none">
+              <span
+                suppressHydrationWarning
+                className="text-xl sm:text-2xl font-black text-white leading-none"
+              >
                 {badgeNumber}
               </span>
             </div>
